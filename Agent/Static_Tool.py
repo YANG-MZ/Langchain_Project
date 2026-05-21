@@ -23,3 +23,4 @@ def get_weather(location: str) -> str:
     return f"Weather in {location}: Sunny, 72°F"
 
 agent = create_agent(model, tools=[search, get_weather])        #如果提供的工具列表为空，则代理将由一个没有工具调用功能的 LLM 节点组成
+
