@@ -87,7 +87,7 @@ agent = create_agent(
     model="gpt-5.4",
     tools=[search_tool, analysis_tool, export_tool],
     middleware=[store_based_tools],     # 挂载我们的拦截器
-    context_schema=Context,             # 声明上下文的类型约束
+    context_schema=Context,             # 声明后台必须传入 Context 这个数据结构中定义的数据
     store=InMemoryStore()               # 注入存储
 )
 
@@ -139,7 +139,7 @@ agent = create_agent(
     model="gpt-5.4",
     tools=[read_data, write_data, delete_data],
     middleware=[context_based_tools],
-    context_schema=Context
+    context_schema=Context          #声明后台必须传入 Context 这个数据结构中定义的数据
 )
 
 
