@@ -38,6 +38,11 @@ agent = create_agent(
 
 
 """
-Pre-bound models (models with bind_tools already called) are not supported when using structured output. If you need dynamic model selection with structured output, ensure the models passed to the middleware are not pre-bound.
+Pre-bound models (models with bind_tools already called) are not supported when using structured output. 
+If you need dynamic model selection with structured output, ensure the models passed to the middleware are not pre-bound.
+
+翻译：
+当你使用‘结构化输出（Structured Output）’功能时，绝对不能传入已经提前绑定了工具（Pre-bound）的模型。
+如果你需要根据中间件动态选择或过滤模型/工具，必须确保传给中间件的模型是‘干净、没绑定过工具’的原生模型。
 
 """
