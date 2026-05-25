@@ -148,6 +148,48 @@ agent = create_agent(
 """
 情况二
 Runtime tool registration  运行时工具注册:
-    如果在代理创建时已知所有可能的工具，您可以预先注册它们，并根据状态、权限或上下文动态筛选哪些工具将对模型可见。
+    -如果在代理创建时已知所有可能的工具，您可以预先注册它们，并根据状态、权限或上下文动态筛选哪些工具将对模型可见。
 
+    -这需要两个中间件钩子(middleware hooks):
+        wrap_model_call - 向请求添加动态工具（让模型知道有这个工具）
+        wrap_tool_call - 处理动态添加工具的执行（让 Agent 知道怎么执行这个工具）
 """
+from langchain.tools import tool
+from langchain.agents import create_agent
+from langchain.agents.middleware import AgentMiddleware, ModelRequest, ToolCallRequest
+
+# 一个将在运行时动态添加的工具
+@tool
+def calculate_tip(bill_amount: float, tip_percentage: float = 20.0) -> str:
+    """Calculate the tip amount for a bill."""
+    tip = bill_amount * (tip_percentage / 100)
+    return f"Tip: ${tip:.2f}, Total: ${bill_amount + tip:.2f}"
+
+class DynamicToolMiddleware(AgentMiddleware):
+    """
+    用于注册和处理动态工具的中间件。
+    通过继承 AgentMiddleware，我们可以拦截并修改 Agent 运行生命周期中的关键事件（类似 Web 开发中的请求/响应中间件）。
+    """
+
+    def wrap_model_call(self, request: ModelRequest, handler):
+        # 向请求中添加动态工具
+        # 这可以从 MCP 服务器、数据库等处加载
+        updated = request.override(tools=[*request.tools, calculate_tip])
+        return handler(updated)
+
+    def wrap_tool_call(self, request: ToolCallRequest, handler):
+        # Handle execution of the dynamic tool
+        if request.tool_call["name"] == "calculate_tip":
+            return handler(request.override(tool=calculate_tip))
+        return handler(request)
+
+agent = create_agent(
+    model="gpt-4o",
+    tools=[get_weather],  # 只有 get_weather 是静态注册的
+    middleware=[DynamicToolMiddleware()],   # 挂载动态工具中间件
+)
+
+# The agent can now use both get_weather AND calculate_tip
+result = agent.invoke({
+    "messages": [{"role": "user", "content": "Calculate a 20% tip on $85"}]
+})
